@@ -48,8 +48,6 @@ public class LobbySceneManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     void RequestStartGameServerRpc(ServerRpcParams rpcParams = default)
     {
-        
-        
         ulong clientId = rpcParams.Receive.SenderClientId;
         Debug.Log($"[Server] Client {clientId} clicked Start Game. Broadcasting to all clients...");
         
@@ -67,6 +65,7 @@ public class LobbySceneManager : NetworkBehaviour
         GameManager.Instance.roundDurationInSeconds = 60f;
         //Sets all the corresponding stuff, only on start game then start the round
         GameManager.Instance.SetupRound();
+        GameManager.Instance.playerIDs = NetworkManager.Singleton.ConnectedClientsIds.ToList();
 
         
         //TODO: Pick the map, and send the number of sounds and type of sound to the map for mapping

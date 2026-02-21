@@ -55,18 +55,24 @@ public class JabberSource : MonoBehaviour
         //TODO: Stop the sound generation
     }
 
-    private IEnumerator JabberRoutine()
+private IEnumerator JabberRoutine()
+{
+    while (activated)
     {
-        while (activated)
-        {
-            float interval = Random.Range(lowerLimit, upperLimit);
-            yield return new WaitForSeconds(interval);
+        // Wait a random gap between plays
+        float interval = Random.Range(lowerLimit, upperLimit);
+        yield return new WaitForSeconds(interval);
 
-            if (!activated) break;
+        if (!activated) break;
 
-            audioSource.PlayOneShot(audioClip);
-            anim.Play("active");
-        }
+        audioSource.clip = audioClip;
+        print("Playing audio source");
+        audioSource.Play();
+        anim.Play("active");
+
+        // Wait for the clip to finish before looping
+        yield return new WaitForSeconds(audioClip.length);
     }
+}
 
 }

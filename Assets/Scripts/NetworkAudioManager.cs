@@ -94,9 +94,11 @@ public class NetworkedAudioManager : NetworkBehaviour
 
         // Register on server
         AudioClip clip = ByteArrayToAudioClip(fullAudio, meta[0], meta[1], $"Player_{clientId}_Audio");
+        RecordAudio recordAudio = FindAnyObjectByType<RecordAudio>();
+        recordAudio.recordedClip = clip;
         playerAudioClips[clientId] = clip;
         Debug.Log($"[Server] Registered audio for client {clientId}. Total players: {playerAudioClips.Count}");
-
+        Debug.Log($"Reconstructed clip freq: {clip.frequency}, channels: {clip.channels}, samples: {clip.samples}, length: {clip.length}s");
         // Clean up
         serverPendingChunks.Remove(clientId);
         serverExpectedChunks.Remove(clientId);
@@ -145,6 +147,7 @@ public class NetworkedAudioManager : NetworkBehaviour
             clientExpectedChunks.Remove(playerId);
             clientPendingMeta.Remove(playerId);
         }
+        
     }
 
     // ---- Helpers ----
@@ -182,6 +185,7 @@ public class NetworkedAudioManager : NetworkBehaviour
     AudioClip ByteArrayToAudioClip(byte[] bytes, int frequency, int channels, string name)
     {
         float[] samples = new float[bytes.Length / 2];
+        Debug.Log($"Bytes received: {bytes.Length}, is even: {bytes.Length % 2 == 0}");
         for (int i = 0; i < samples.Length; i++)
         {
             short value = (short)(bytes[i * 2] | (bytes[i * 2 + 1] << 8));

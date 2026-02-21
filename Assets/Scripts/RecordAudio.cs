@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class RecordAudio : MonoBehaviour
 {
-    private AudioClip recordedClip;
+    public AudioClip recordedClip;
     [SerializeField] AudioSource audioSource;
     int lengthSec = 3;
 
@@ -23,14 +23,27 @@ public class RecordAudio : MonoBehaviour
 
     public void StopRecording()
     {
+        string device = Microphone.devices[0];
+        int recordedSamples = Microphone.GetPosition(device);
         Microphone.End(null);
         Debug.Log("Recording stopped");
 
-        if (recordedClip != null)
+        if (recordedClip != null && recordedSamples > 0)
         {
-            //AudioClip processedClip = NormalizeAndBoost(recordedClip, normalizedPeak, boostValue);
-            // Hand off to the NetworkedAudioManager — it owns all network logic
-            NetworkedAudioManager.Instance.SubmitRecording(recordedClip);
+            // Trim to actual recorded length
+            float[] samples = new float[recordedSamples * recordedClip.channels];
+            recordedClip.GetData(samples, 0);
+
+            AudioClip trimmedClip = AudioClip.Create(
+                "TrimmedRecording",
+                recordedSamples,
+                recordedClip.channels,
+                recordedClip.frequency,
+                false
+            );
+            trimmedClip.SetData(samples, 0);
+            Debug.Log($"Clip freq: {trimmedClip.frequency}, channels: {trimmedClip.channels}, samples: {trimmedClip.samples}");
+            NetworkedAudioManager.Instance.SubmitRecording(trimmedClip);
         }
     }
 
