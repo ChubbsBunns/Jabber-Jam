@@ -10,7 +10,7 @@ public class NetworkedAudioManager : NetworkBehaviour
     private const int CHUNK_SIZE = 512;
 
     // Stored audio per player (lives on all clients + server)
-    private Dictionary<ulong, AudioClip> playerAudioClips = new Dictionary<ulong, AudioClip>();
+    public Dictionary<ulong, AudioClip> playerAudioClips = new Dictionary<ulong, AudioClip>();
 
     // Server-side chunk assembly tracking
     private Dictionary<ulong, List<byte[]>> serverPendingChunks = new Dictionary<ulong, List<byte[]>>();

@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     public Dictionary<ulong, AudioClip> playerAudioClips = new Dictionary<ulong, AudioClip>();
 
-    public String[] playerIDs;
+    public List<ulong> playerIDs;
     public String imposterPlayerID;
     public float roundDurationInSeconds;
     public int maxNumRounds = 2;
@@ -21,6 +21,8 @@ public class GameManager : MonoBehaviour
     public float countdownMaxTime = 3.0f;
     public float currRoundStartCountDownTime;
     public float currRoundCountdown = 0;
+
+
 
 
     void Start()
@@ -37,10 +39,6 @@ public class GameManager : MonoBehaviour
     //TODO: Port the randomization algo here,
     // Host and list all the corresponding map potential audio sources.
     // Once loaded, pick the imposter, and update the map with the corersponding audios
-    void UpdateAudioFiles()
-    {
-        
-    }
 
     public void SetupRound()
     {
@@ -57,8 +55,11 @@ public class GameManager : MonoBehaviour
 
         //This section here is to assign the audio clips dynamically. Im too lazy to refactor this shit
         List<AudioClip> audioClipsForRound = GetAudioClipLists();
+        print("Printing audio clips");
+        print(audioClipsForRound);
         JabberSource[] jabberSources = LevelAudioSourceManager.Instance.GetJabberSources();
-        int[] JabberSourcesIndexToAssign = Get_Random_Indexes((playerIDs.Length + 1), jabberSources.Length);
+        Debug.Log("Jabber sources length is " + jabberSources.Length);
+        int[] JabberSourcesIndexToAssign = Get_Random_Indexes(playerIDs.Count + 1, jabberSources.Length);
         if (JabberSourcesIndexToAssign.Length != audioClipsForRound.Count)
         {
             Debug.LogError("Number of audio clips in audioClips For Round is not the same asJabber sources index to assign");
@@ -70,7 +71,17 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < JabberSourcesIndexToAssign.Length; i++)
         {
-            jabberSources[JabberSourcesIndexToAssign[i]].audioClip = audioClipsForRound[i];
+            int idx = JabberSourcesIndexToAssign[i];
+            JabberSource js = LevelAudioSourceManager.Instance.jabberSources[idx];
+            
+            if (js == null)
+            {
+                Debug.LogError($"JabberSource at index {idx} is NULL!");
+                continue;
+            }
+
+            print("Assigning " + idx + " the audio clip " + audioClipsForRound[i].name);
+            js.Set(audioClipsForRound[i]);
         }
 
         StartCoroutine(CountdownTillRoundStart());
@@ -121,12 +132,12 @@ public class GameManager : MonoBehaviour
 
     public string GetRandomPlayerID()
     {
-        if (playerIDs == null || playerIDs.Length == 0)
+        if (playerIDs == null || playerIDs.Count == 0)
             return null;
 
         System.Random random = new System.Random();
-        int index = random.Next(playerIDs.Length);
-        return playerIDs[index];
+        int index = random.Next(playerIDs.Count);
+        return playerIDs[index].ToString();
     }
 
     private int[] Get_Random_Indexes(int numAssigned, int numMax)
@@ -134,6 +145,8 @@ public class GameManager : MonoBehaviour
         System.Random rand = new System.Random();
         if (numAssigned > numMax)
         {
+            print("Num assigned is " + numAssigned);
+            print("Num max is " + numMax);
             Debug.LogError("Num assigned more than num max");
         }
         int[] numbers = Enumerable.Range(0, numMax).ToArray();

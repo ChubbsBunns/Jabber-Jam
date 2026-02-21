@@ -9,10 +9,10 @@ public class LobbySceneManager : NetworkBehaviour
     [SerializeField] GameObject[] LobbyUI;
     [SerializeField] Transform[] LobbyUI_Transform;
     [SerializeField] GameObject[] Maps;
-    Dictionary<String, int> LobbyNameToIndexInMapsDictionary;
     [SerializeField] GameObject AudioRecorder;
     public NetworkedAudioManager networkedAudioManager;
     public GameManager gameManager;
+    public MapSelector mapSelector;
 
     void Start()
     {
@@ -23,6 +23,7 @@ public class LobbySceneManager : NetworkBehaviour
         }
         networkedAudioManager = FindAnyObjectByType<NetworkedAudioManager>();
         gameManager = FindAnyObjectByType<GameManager>();
+        mapSelector = FindAnyObjectByType<MapSelector>();
         if (networkedAudioManager == null)
         {
             Debug.LogError("No Network Audio Manager Found by Lobby Scene Manager");
@@ -30,6 +31,10 @@ public class LobbySceneManager : NetworkBehaviour
         if (gameManager == null)
         {
             Debug.LogError("No Network Audio Manager Found by Lobby Scene Manager");
+        }
+        if (mapSelector == null)
+        {
+            Debug.LogError("No Map Selector Found by Lobby Scene Manager");
         }
     }
 
@@ -43,19 +48,31 @@ public class LobbySceneManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     void RequestStartGameServerRpc(ServerRpcParams rpcParams = default)
     {
+        
+        
         ulong clientId = rpcParams.Receive.SenderClientId;
         Debug.Log($"[Server] Client {clientId} clicked Start Game. Broadcasting to all clients...");
-        //Have a game manager, :
-        // that has the number of rounds, 
-        // holds all the sounds and corresponding palyer ids
+        
+
+        if (!mapSelector.LoadChosenMap())
+        {
+            Debug.LogError("Unable to load chosen map, see error logs above.");
+            return;            
+        }
+        else
+        {
+            Debug.Log("Kitchen map loaded");
+        }
         GameManager.Instance.playerAudioClips = NetworkedAudioManager.Instance.playerAudioClips;
         GameManager.Instance.roundDurationInSeconds = 60f;
-        //Sets all the corresponding stuff, only on start game then start the round. Reset round logic in endRound for game manager
+        //Sets all the corresponding stuff, only on start game then start the round
+        GameManager.Instance.SetupRound();
 
         
         //TODO: Pick the map, and send the number of sounds and type of sound to the map for mapping
 
         //Start the game by removing UI Elements
+        
         StartGameClientRpc();
     }
 
@@ -93,4 +110,6 @@ public class LobbySceneManager : NetworkBehaviour
         Debug.Log("Joined Lobby");
         AudioRecorder.SetActive(true);
     }
+
+
 }
